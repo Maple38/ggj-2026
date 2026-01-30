@@ -19,6 +19,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float turnSpeedMult;
     [SerializeField] private float airControlMult;
 
+    private Collider2D _collider2D;
+    private EdgeCollider2D _bottomCollider;
     private float _gravity;
     private bool _grounded;
     private int _jumps;
@@ -26,11 +28,15 @@ public class PlayerMovement : MonoBehaviour
     private float _jumpBufferActive;
     private float _velocityH;
     private float _velocityV;
+    private int _groundLayerMask;
 
     private void Awake()
     {
+        _groundLayerMask = LayerMask.NameToLayer("Ground");
+        _collider2D = GetComponent<Collider2D>();
+        _bottomCollider = GetComponent<EdgeCollider2D>();
         // g = 2h / t^2
-        _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak) ;
+        _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak);
     }
 
     private void Update()
@@ -41,12 +47,12 @@ public class PlayerMovement : MonoBehaviour
             Ground();
         }
     }
-    
+
     public void Run(float input)
     {
         float mult = 1;
         if (!Mathf.Sign(_velocityH).Equals(Mathf.Sign(input)))
-        { 
+        {
             mult *= turnSpeedMult;
         }
 
@@ -54,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
         {
             mult *= airControlMult;
         }
+
         _velocityH += input * Time.deltaTime * runAccel * mult;
     }
 
@@ -95,8 +102,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool GroundCheck()
     {
-        // TODO
-        return true;
+        return _bottomCollider.IsTouchingLayers(_groundLayerMask);
     }
 
     // Runs the jump physics and nothing else
