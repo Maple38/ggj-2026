@@ -46,6 +46,9 @@ public class PlayerMovement : MonoBehaviour
         {
             Ground();
         }
+        if (!_grounded && _velocityV <= 0)
+        {Fall();}
+        transform.Translate(new Vector2(_velocityH, _velocityV));
     }
 
     public void Run(float input)
@@ -72,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void Fall()
+    private void Fall()
     {
         if (!_grounded)
         {
@@ -102,7 +105,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool GroundCheck()
     {
-        return _bottomCollider.IsTouchingLayers(_groundLayerMask);
+        return true;
     }
 
     // Runs the jump physics and nothing else

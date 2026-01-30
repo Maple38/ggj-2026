@@ -31,6 +31,5 @@ public class PlayerInput : MonoBehaviour
         {
             _playerMovement.Jump();
         }
-        else {_playerMovement.Fall();}
     }
 }
