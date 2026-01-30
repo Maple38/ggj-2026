@@ -17,16 +17,17 @@ public class PlayerInput : MonoBehaviour
     }
     void Update()
     {
-        if (_actionMove.IsPressed())
-        {
-            _playerMovement.Run(_actionMove.GetControlMagnitude());
-        }
-        else
-        {
-            _playerMovement.Decelerate();
-        }
+        // Vector2 move = _actionMove.ReadValue<Vector2>();
+        // if (move > 0)
+        // {
+        //     _playerMovement.Run(move);
+        // }
+        // else
+        // {
+        //     _playerMovement.Decelerate();
+        // }
 
-        if (_actionJump.WasPressedThisFrame())
+        if (_actionJump.WasPerformedThisFrame())
         {
             _playerMovement.Jump();
         }
