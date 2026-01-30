@@ -65,6 +65,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public void Fall()
+    {
+        _velocityV -= _gravity * gravityFallMult * Time.deltaTime;
+        if (_velocityV < terminalVelocity)
+        {
+            _velocityV = terminalVelocity;
+        } 
+    }
+
     public void Jump()
     {
         if (_grounded || _coyote > 0f)
