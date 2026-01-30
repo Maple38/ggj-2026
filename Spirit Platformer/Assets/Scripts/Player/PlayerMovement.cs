@@ -1,9 +1,10 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Jump")]
-    [SerializeField] private float gravity;
+    [SerializeField] private float gravityFallMult;
     [SerializeField] private float terminalVelocity;
     [SerializeField] private int maxJumps;
     [SerializeField] private float timeToPeak;
@@ -16,28 +17,52 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float runAccel;
     [SerializeField] private float runDecel;
     [SerializeField] private float turnSpeedMult;
+    [SerializeField] private float airControlMult;
 
+    private float _gravity;
     private bool _grounded;
     private int _jumps;
     private float _coyote;
     private float _jumpBufferActive;
-    private float _hVelocity;
+    private float _velocityH;
+    private float _velocityV;
 
+    private void Awake()
+    {
+        // g = 2h / t^2
+        _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak) ;
+    }
+
+    private void Update()
+    {
+        _velocityH = Mathf.Clamp(_velocityH, -runSpeedMax, runSpeedMax);
+        if (GroundCheck())
+        {
+            Ground();
+        }
+    }
+    
     public void Run(float input)
     {
-        if (!Mathf.Sign(_hVelocity).Equals(Mathf.Sign(input)))
-        {
-            _hVelocity += input * Time.deltaTime * turnSpeedMult * runAccel;
+        float mult = 1;
+        if (!Mathf.Sign(_velocityH).Equals(Mathf.Sign(input)))
+        { 
+            mult *= turnSpeedMult;
         }
-        else
+
+        if (!_grounded)
         {
-            _hVelocity += input * Time.deltaTime * runAccel;
+            mult *= airControlMult;
         }
+        _velocityH += input * Time.deltaTime * runAccel * mult;
     }
 
     public void Decelerate()
     {
-        _hVelocity -= runDecel * Time.deltaTime;
+        if (_grounded)
+        {
+            _velocityH -= runDecel * Time.deltaTime;
+        }
     }
 
     public void Jump()
@@ -47,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
             if (_jumps > 0)
             {
                 _jumps -= 1;
-                ExecuteJump();
+                StartCoroutine(JumpCoroutine(jumpHeight, timeToPeak));
             }
         }
         else
@@ -56,13 +81,27 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Runs the jump physics and nothing else
-    private void ExecuteJump(float height)
+    private bool GroundCheck()
     {
+        // TODO
+        return true;
+    }
+
+    // Runs the jump physics and nothing else
+    private IEnumerator JumpCoroutine(float height, float maxTime)
+    {
+        // v0 = 2h / t
+        _velocityV = 2 * height / maxTime;
+        if (_velocityV > 0)
+        {
+            _velocityV -= Time.deltaTime * _gravity;
+            yield return new WaitForEndOfFrame();
+        }
     }
 
     public void Ground()
     {
+        _coyote = coyoteMax;
         _jumps = maxJumps;
         if (_jumpBufferActive > 0f)
         {
