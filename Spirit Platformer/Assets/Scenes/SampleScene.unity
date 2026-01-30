@@ -537,7 +537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   gravityFallMult: 1
-  terminalVelocity: 1
+  terminalVelocity: -1
   maxJumps: 1
   timeToPeak: 1
   jumpHeight: 1
