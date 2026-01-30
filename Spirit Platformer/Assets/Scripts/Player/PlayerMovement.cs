@@ -67,11 +67,14 @@ public class PlayerMovement : MonoBehaviour
 
     public void Fall()
     {
-        _velocityV -= _gravity * gravityFallMult * Time.deltaTime;
-        if (_velocityV < terminalVelocity)
+        if (!_grounded)
         {
-            _velocityV = terminalVelocity;
-        } 
+            _velocityV -= _gravity * gravityFallMult * Time.deltaTime;
+            if (_velocityV < terminalVelocity)
+            {
+                _velocityV = terminalVelocity;
+            }
+        }
     }
 
     public void Jump()
