@@ -23,6 +23,7 @@ public class PlayerMovement : MonoBehaviour
     private EdgeCollider2D _bottomCollider;
     private float _gravity;
     private bool _grounded;
+    private bool _groundedLast;
     private int _jumps;
     private float _coyote;
     private float _jumpBufferActive;
@@ -42,10 +43,22 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         _velocityH = Mathf.Clamp(_velocityH, -runSpeedMax, runSpeedMax);
+        
+        _groundedLast = _grounded;
         if (GroundCheck())
         {
-            Ground();
+            _grounded = true;
+            if (_groundedLast != _grounded)
+            {
+                Ground();
+            }
         }
+        else
+        {
+            _grounded = false;
+        }
+        print(_grounded);
+        
         if (!_grounded && _velocityV <= 0)
         {Fall();}
         transform.Translate(new Vector2(_velocityH, _velocityV));
@@ -105,7 +118,7 @@ public class PlayerMovement : MonoBehaviour
 
     private bool GroundCheck()
     {
-        return true;
+        return _bottomCollider.IsTouchingLayers(_groundLayerMask);
     }
 
     // Runs the jump physics and nothing else
