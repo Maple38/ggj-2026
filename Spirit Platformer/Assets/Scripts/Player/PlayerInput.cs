@@ -25,6 +25,11 @@ public class PlayerInput : MonoBehaviour
         {
             _playerMovement.Decelerate();
         }
-        
+
+        if (_actionJump.WasPressedThisFrame())
+        {
+            _playerMovement.Jump();
+        }
+        else {_playerMovement.Fall();}
     }
 }
