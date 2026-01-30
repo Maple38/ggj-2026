@@ -17,15 +17,15 @@ public class PlayerInput : MonoBehaviour
     }
     void Update()
     {
-        // Vector2 move = _actionMove.ReadValue<Vector2>();
-        // if (move > 0)
-        // {
-        //     _playerMovement.Run(move);
-        // }
-        // else
-        // {
-        //     _playerMovement.Decelerate();
-        // }
+        float move = _actionMove.ReadValue<Vector2>().x;
+        if (move > 0)
+        {
+            _playerMovement.Run(move);
+        }
+        else
+        {
+            _playerMovement.Decelerate();
+        }
 
         if (_actionJump.WasPerformedThisFrame())
         {
