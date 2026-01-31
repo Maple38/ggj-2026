@@ -5,10 +5,8 @@ public class PlayerInput : MonoBehaviour
 {
     private PlayerMovement _playerMovement;
 
-    private InputAction _actionMove;
-    private InputAction _actionJump;
-
     private float _stateMove;
+    private bool _stateJump;
     
     void Awake()
     {
@@ -16,6 +14,16 @@ public class PlayerInput : MonoBehaviour
     }
     void Update()
     {
-        _playerMovement.SetInput(_actionMove.ReadValue<Vector2>().x, _actionJump.WasPerformedThisFrame());
+        _playerMovement.SetInput(_stateMove, _stateJump);
+    }
+
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        _stateMove = context.ReadValue<Vector2>().x;
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        _stateJump = context.performed;
     }
 }
