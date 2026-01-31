@@ -44,6 +44,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (_jumpBufferActive > 0)
+        {
+            _jumpBufferActive -= Time.deltaTime;
+        }
+
+        if (_coyote > 0)
+        {
+            _coyote -= Time.deltaTime;
+        }
+
         _velocity.x = Mathf.Clamp(_velocity.x, -runSpeedMax, runSpeedMax);
         _groundedLast = _grounded;
     }
@@ -85,22 +95,27 @@ public class PlayerMovement : MonoBehaviour
     private void CacheVariables()
     {
         _rb = GetComponent<Rigidbody2D>();
-        _collisionMask = LayerMask.GetMask("Ground");
         _collider = GetComponent<BoxCollider2D>();
-        _collisionBox = new Vector2(_collider.size.x - (2 * skinWidth), _collider.size.y - (2 * skinWidth));
+        
+        _collisionMask = LayerMask.GetMask("Ground");
+        
+        Vector2 scaledSize = _collider.size * transform.localScale;
+        _collisionBox = new Vector2(scaledSize.x - (2 * skinWidth), scaledSize.y - (2 * skinWidth));
+        
         // g = 2h / t^2
         _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak);
     }
 
     private void Move(float delta)
     {
-        Vector2 deltaMove = _velocity;
-        
-        if (!Mathf.Approximately(_velocity.x, 0f))
+        Vector2 deltaMove = _velocity * delta;
+
+        if (!Mathf.Approximately(deltaMove.x, 0f))
         {
             CollisionHorizontal(ref deltaMove.x);
         }
-        if (!Mathf.Approximately(_velocity.y, 0f))
+
+        if (!Mathf.Approximately(deltaMove.y, 0f))
         {
             CollisionVertical(ref deltaMove.y);
         }
@@ -111,7 +126,7 @@ public class PlayerMovement : MonoBehaviour
     private void CollisionHorizontal(ref float delta)
     {
         var direction = Mathf.Sign(delta);
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, 
+        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0,
             Vector2.right * direction, Mathf.Abs(delta) + skinWidth,
             _collisionMask);
         if (hit)
@@ -124,14 +139,14 @@ public class PlayerMovement : MonoBehaviour
     private void CollisionVertical(ref float delta)
     {
         var direction = Mathf.Sign(delta);
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, 
+        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0,
             Vector2.up * direction, Mathf.Abs(delta) + skinWidth,
             _collisionMask);
         if (hit)
         {
             delta = (hit.distance - skinWidth) * direction;
             _velocity.y = 0;
-            
+
             if ((int)direction == -1)
             {
                 _grounded = true;
@@ -173,11 +188,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyGravity()
     {
-        var mult = (_velocity.y < 0f) ? gravityFallMult : 1f; 
+        var mult = (_velocity.y < 0f) ? gravityFallMult : 1f;
         _velocity.y -= _gravity * mult * Time.deltaTime;
-        if (_velocity.y < terminalVelocity)
+        if (_velocity.y < -terminalVelocity)
         {
-            _velocity.y = terminalVelocity;
+            _velocity.y = -terminalVelocity;
         }
     }
 
@@ -197,10 +212,10 @@ public class PlayerMovement : MonoBehaviour
             _jumpBufferActive = jumpBuffer;
         }
     }
-    
+
     private void Ground()
     {
-        // _coyote = coyoteMax;
+        _coyote = coyoteMax;
         _jumps = maxJumps;
         if (_jumpBufferActive > 0f)
         {
@@ -217,8 +232,6 @@ public class PlayerMovement : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.darkGreen;
-        Gizmos.DrawWireCube(_rb.position, _collider.size);
-        Gizmos.color = Color.green;
         Gizmos.DrawWireCube(_rb.position, _collisionBox);
     }
 }
