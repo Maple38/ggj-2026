@@ -96,12 +96,12 @@ public class PlayerMovement : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _collider = GetComponent<BoxCollider2D>();
-        
+
         _collisionMask = LayerMask.GetMask("Ground");
-        
+
         Vector2 scaledSize = _collider.size * transform.localScale;
         _collisionBox = new Vector2(scaledSize.x - (2 * skinWidth), scaledSize.y - (2 * skinWidth));
-        
+
         // g = 2h / t^2
         _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak);
     }
@@ -144,7 +144,6 @@ public class PlayerMovement : MonoBehaviour
             _collisionMask);
         if (hit)
         {
-            print(hit);
             delta = (hit.distance - skinWidth) * direction;
             _velocity.y = 0;
 
@@ -159,7 +158,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            print("nope");
             _grounded = false;
         }
     }
