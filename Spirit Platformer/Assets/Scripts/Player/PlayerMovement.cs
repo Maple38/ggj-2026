@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -5,7 +6,7 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float skinWidth;
-    
+
     [Header("Jump")]
     [SerializeField] private float gravityFallMult;
     [SerializeField] private float terminalVelocity;
@@ -21,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float runDecel;
     [SerializeField] private float turnSpeedMult;
     [SerializeField] private float airControlMult;
-    
+
     private BoxCollider2D _collider;
     private float _gravity;
     private bool _grounded;
@@ -30,61 +31,114 @@ public class PlayerMovement : MonoBehaviour
     private float _coyote;
     private float _jumpBufferActive;
     private Vector2 _velocity;
-    private int _collisionMask;
+    private LayerMask _collisionMask;
     private Rigidbody2D _rb;
     private Vector2 _collisionBox;
+    private float _inMove;
+    private bool _inJump;
 
     private void Awake()
     {
-        _rb = GetComponent<Rigidbody2D>();
-        _collisionMask = LayerMask.NameToLayer("Ground");
-        _collider = GetComponent<BoxCollider2D>();
-        _collisionBox = new Vector2(_collider.size.x - 2 * skinWidth, _collider.size.y - 2 * skinWidth);
-        // g = 2h / t^2
-        _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak);
+        CacheVariables();
     }
 
     private void Update()
     {
         _velocity.x = Mathf.Clamp(_velocity.x, -runSpeedMax, runSpeedMax);
-        
         _groundedLast = _grounded;
-        ApplyFall();
-        Move();
     }
 
-    private void Move()
+    private void FixedUpdate()
     {
+        HandleInput();
+        ApplyGravity();
+        Move(Time.fixedDeltaTime);
+    }
+
+    public void SetInput(float move, bool jump)
+    {
+        _inMove = move;
+        if (jump)
+        {
+            _inJump = true;
+        }
+    }
+
+    private void HandleInput()
+    {
+        if (Mathf.Abs(_inMove) > 0.01f)
+        {
+            Run(_inMove);
+        }
+        else
+        {
+            Decelerate();
+        }
+
+        if (_inJump)
+        {
+            Jump();
+            _inJump = false;
+        }
+    }
+
+    private void CacheVariables()
+    {
+        _rb = GetComponent<Rigidbody2D>();
+        _collisionMask = LayerMask.GetMask("Ground");
+        _collider = GetComponent<BoxCollider2D>();
+        _collisionBox = new Vector2(_collider.size.x - (2 * skinWidth), _collider.size.y - (2 * skinWidth));
+        // g = 2h / t^2
+        _gravity = 2 * jumpHeight / (timeToPeak * timeToPeak);
+    }
+
+    private void Move(float delta)
+    {
+        Vector2 deltaMove = _velocity;
+        
         if (!Mathf.Approximately(_velocity.x, 0f))
         {
-            CollisionHorizontal(ref _velocity.x);
-        }      
+            CollisionHorizontal(ref deltaMove.x);
+        }
         if (!Mathf.Approximately(_velocity.y, 0f))
         {
-            CollisionHorizontal(ref _velocity.y);
+            CollisionVertical(ref deltaMove.y);
+        }
+
+        _rb.MovePosition(_rb.position + deltaMove);
+    }
+
+    private void CollisionHorizontal(ref float delta)
+    {
+        var direction = Mathf.Sign(delta);
+        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, 
+            Vector2.right * direction, Mathf.Abs(delta) + skinWidth,
+            _collisionMask);
+        if (hit)
+        {
+            delta = (hit.distance - skinWidth) * direction;
+            _velocity.x = 0;
         }
     }
 
-    private void CollisionHorizontal(ref float velocity)
+    private void CollisionVertical(ref float delta)
     {
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, Vector2.right * velocity, velocity + skinWidth,
+        var direction = Mathf.Sign(delta);
+        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, 
+            Vector2.up * direction, Mathf.Abs(delta) + skinWidth,
             _collisionMask);
         if (hit)
         {
-            velocity = hit.distance;
-        }
-    }    
-    private void CollisionVertical(ref float velocity)
-    {
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0, Vector2.up * velocity, velocity + skinWidth,
-            _collisionMask);
-        if (hit)
-        {
-            velocity = hit.distance;
-            _grounded = true;
-            if (_grounded != _groundedLast)
+            delta = (hit.distance - skinWidth) * direction;
+            _velocity.y = 0;
+            
+            if ((int)direction == -1)
             {
-                Ground();
+                _grounded = true;
+                if (_grounded != _groundedLast)
+                {
+                    Ground();
+                }
             }
         }
         else
@@ -93,7 +147,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void Run(float input)
+    private void Run(float input)
     {
         float mult = 1;
         if (!Mathf.Sign(_velocity.x).Equals(Mathf.Sign(input)))
@@ -109,32 +163,33 @@ public class PlayerMovement : MonoBehaviour
         _velocity.x += input * Time.deltaTime * runAccel * mult;
     }
 
-    public void Decelerate()
+    private void Decelerate()
     {
         if (_grounded)
         {
-            _velocity.x -= runDecel * Time.deltaTime;
+            _velocity.x = Mathf.MoveTowards(_velocity.x, 0f, runDecel * Time.deltaTime);
         }
     }
 
-    private void ApplyFall()
+    private void ApplyGravity()
     {
-            _velocity.y -= _gravity * gravityFallMult * Time.deltaTime;
-            if (_velocity.y < terminalVelocity)
-            {
-                _velocity.y = terminalVelocity;
-            }
-
+        var mult = (_velocity.y < 0f) ? gravityFallMult : 1f; 
+        _velocity.y -= _gravity * mult * Time.deltaTime;
+        if (_velocity.y < terminalVelocity)
+        {
+            _velocity.y = terminalVelocity;
+        }
     }
 
-    public void Jump()
+    private void Jump()
     {
         if (_grounded || _coyote > 0f)
         {
             if (_jumps > 0)
             {
                 _jumps -= 1;
-                StartCoroutine(JumpCoroutine(jumpHeight, timeToPeak));
+                // v0 = 2h / t
+                _velocity.y = 2 * jumpHeight / timeToPeak;
             }
         }
         else
@@ -142,20 +197,8 @@ public class PlayerMovement : MonoBehaviour
             _jumpBufferActive = jumpBuffer;
         }
     }
-
-    // Runs the jump physics and nothing else
-    private IEnumerator JumpCoroutine(float height, float maxTime)
-    {
-        // v0 = 2h / t
-        _velocity.y = 2 * height / maxTime;
-        if (_velocity.y > 0)
-        {
-            _velocity.y -= Time.deltaTime * _gravity;
-            yield return new WaitForEndOfFrame();
-        }
-    }
-
-    public void Ground()
+    
+    private void Ground()
     {
         // _coyote = coyoteMax;
         _jumps = maxJumps;
@@ -164,6 +207,11 @@ public class PlayerMovement : MonoBehaviour
             _jumpBufferActive = 0;
             Jump();
         }
+    }
+
+    private void OnValidate()
+    {
+        CacheVariables();
     }
 
     private void OnDrawGizmosSelected()

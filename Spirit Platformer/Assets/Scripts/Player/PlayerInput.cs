@@ -7,29 +7,15 @@ public class PlayerInput : MonoBehaviour
 
     private InputAction _actionMove;
     private InputAction _actionJump;
+
+    private float _stateMove;
     
     void Awake()
     {
         _playerMovement = GetComponent<PlayerMovement>();
-
-        _actionMove = InputSystem.actions.FindAction("Move");
-        _actionJump = InputSystem.actions.FindAction("Jump");
     }
     void Update()
     {
-        float move = _actionMove.ReadValue<Vector2>().x;
-        if (move > 0)
-        {
-            _playerMovement.Run(move);
-        }
-        else
-        {
-            _playerMovement.Decelerate();
-        }
-
-        if (_actionJump.WasPerformedThisFrame())
-        {
-            _playerMovement.Jump();
-        }
+        _playerMovement.SetInput(_actionMove.ReadValue<Vector2>().x, _actionJump.WasPerformedThisFrame());
     }
 }
