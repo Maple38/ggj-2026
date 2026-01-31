@@ -126,7 +126,7 @@ public class PlayerMovement : MonoBehaviour
     private void CollisionHorizontal(ref float delta)
     {
         var direction = Mathf.Sign(delta);
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0,
+        var hit = Physics2D.BoxCast(_collider.transform.position, _collisionBox, 0,
             Vector2.right * direction, Mathf.Abs(delta) + skinWidth,
             _collisionMask);
         if (hit)
@@ -139,11 +139,12 @@ public class PlayerMovement : MonoBehaviour
     private void CollisionVertical(ref float delta)
     {
         var direction = Mathf.Sign(delta);
-        var hit = Physics2D.BoxCast(_rb.position, _collisionBox, 0,
+        var hit = Physics2D.BoxCast(_collider.transform.position, _collisionBox, 0,
             Vector2.up * direction, Mathf.Abs(delta) + skinWidth,
             _collisionMask);
         if (hit)
         {
+            print(hit);
             delta = (hit.distance - skinWidth) * direction;
             _velocity.y = 0;
 
@@ -158,6 +159,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
+            print("nope");
             _grounded = false;
         }
     }
@@ -232,6 +234,6 @@ public class PlayerMovement : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.darkGreen;
-        Gizmos.DrawWireCube(_rb.position, _collisionBox);
+        Gizmos.DrawWireCube(_collider.transform.position, _collisionBox);
     }
 }
